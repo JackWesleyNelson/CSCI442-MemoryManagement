@@ -1,0 +1,10 @@
+TESTING
+=======
+
+Each directory corresponds to a test suite. Within each test suite, each C file
+(.c extension) is a single test. If the .c file, when compiled, exits with a
+status code of 0, the test is considered a success. If the program exits with a
+status code other than 0, then the test is considered a failure.
+
+Each .c test file may make multiple assertions. For the purpose of grading,
+each file passes or fails as a unit.
