@@ -5,6 +5,8 @@
 void *memset(void *s, int c, size_t n)
 {
    // TODO: IMPLEMENT THIS FUNCTION
-
-   return NULL;
+   for(int i = s; i < n; i++){
+      s*[i] = c;
+   }
+   return s;
 }
