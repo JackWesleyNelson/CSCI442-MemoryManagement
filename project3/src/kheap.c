@@ -167,8 +167,9 @@ void add_hole(void *start, void *end, struct heap *heap)
    f.header = &h;
 
    //write header and footer to memory
-   start = h;
-   end - ? = f;
+   sorted_array_insert(&h, &(heap->free_list));
+
+
    // pseudocode:
    // 0. determine if coalesing is possible; if so, remove the appropriate
    //    holes on either side of start and end, and then call add_hole
