@@ -155,8 +155,20 @@ ssize_t find_smallest_hole(size_t size,
 // creates and writes a hole that spans [start,end)
 void add_hole(void *start, void *end, struct heap *heap)
 {
-   // TODO: IMPLEMENT THIS FUNCTION
+   //make header
+   struct header h;
+   h.magic = HEAP_MAGIC;
+   h.size = end - start; //NOTE: DO WE NEED ERROR CHECKING HERE? if (end < start)?
+   h.allocated = 0;  // 0 = unallocated
 
+   //make footer
+   struct footer f;
+   f.magic = HEAP_MAGIC;
+   f.header = &h;
+
+   //write header and footer to memory
+   start = h;
+   end - ? = f;
    // pseudocode:
    // 0. determine if coalesing is possible; if so, remove the appropriate
    //    holes on either side of start and end, and then call add_hole
