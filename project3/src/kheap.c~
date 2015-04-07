@@ -148,7 +148,6 @@ ssize_t find_smallest_hole(size_t size,
    // 3: if large enough, return
    // 4: if not large enough, continue to the next chunk in the iteration
    // 5: if the end is reached before a chunk is found, return -1
-
 	//create size_t variable to use for iteration
 	size_t i = 0;
 	//iterate over size of free_list until a chunk is found
