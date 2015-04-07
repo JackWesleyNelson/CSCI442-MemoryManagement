@@ -156,17 +156,20 @@ ssize_t find_smallest_hole(size_t size,
 void add_hole(void *start, void *end, struct heap *heap)
 {
    //make header
-   struct header h;
-   h.magic = HEAP_MAGIC;
-   h.size = end - start; //NOTE: DO WE NEED ERROR CHECKING HERE? if (end < start)?
-   h.allocated = 0;  // 0 = unallocated
+   struct header *h;
+   h = (struct header *) start;
+   h->magic = HEAP_MAGIC;
+   h->size = end - start; //NOTE: DO WE NEED ERROR CHECKING HERE? if (end < start)?
+   h->allocated = 0;  // 0 = unallocated
 
    //make footer
-   struct footer f;
-   f.magic = HEAP_MAGIC;
-   f.header = &h;
+   struct footer *f;
+   f = (struct footer *) end - sizeof(f);
+   f->magic = HEAP_MAGIC;
+   f->header = &h;
 
-   //write header and footer to memory
+   
+   // add chunk to free list
    sorted_array_insert(&h, &(heap->free_list));
 
 
