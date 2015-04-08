@@ -139,7 +139,6 @@ ssize_t find_smallest_hole(size_t size,
                            u8int page_align,
                            struct heap *heap)
 {
-   // TODO: IMPLEMENT THIS FUNCTION
 
    // pseudocode:
    // 1: iterate over free list
@@ -150,13 +149,16 @@ ssize_t find_smallest_hole(size_t size,
    // 5: if the end is reached before a chunk is found, return -1
 
 	//create size_t variable to use for iteration
-	size_t i = 0;
+   size_t i = 0;
+
+   //header *header = (header *)sorted_array_lookup(i, &heap->)
+
 	//iterate over size of free_list until a chunk is found
-	(i; i < heap->free_list.size; i ++){
+	for(i; i < heap->free_list.size; i ++){
 		//is the size contained in header larger than size needed?
-		if(size < heap->free_list[i].size){
+		if(size < heap->free_list.size){
 			//return the chunk of memory;
-			return heap->free_list[i];
+			return heap->free_list.storage[i];
 		}
 	}
 	//no chunk with a valid size is found, return -1;
@@ -177,7 +179,7 @@ void add_hole(void *start, void *end, struct heap *heap)
    struct footer *f;
    f = (struct footer *) end - sizeof(f);
    f->magic = HEAP_MAGIC;
-   f->header = &h;
+   f->header = h;
 
    
    // add chunk to free list
