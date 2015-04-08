@@ -271,6 +271,9 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
       //TODO
       // Can you guys figure out what (old_hole_loc&0xFFF) is? I don't quite understand it. It may be replaceable by PAGE_MASK
       //but im not sure
+      //Answer: old_hole_loc is the memory address of the location, 
+      //old_hole_loc&0xFFF maintains the highest order 12 bits of old_hole_loc
+      //while setting the remaining bits to 0
    }
 
 
