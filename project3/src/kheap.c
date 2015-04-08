@@ -155,11 +155,31 @@ ssize_t find_smallest_hole(size_t size,
 
 	//iterate over size of free_list until a chunk is found
 	for(i; i < heap->free_list.size; i ++){
+
+      struct header *header = (struct header *)sorted_array_lookup(i , &heap->free_list);
+
+      size_t loc = (size_t)header;
+      size_t offset = 0;
+
+      //calulate size of hole after you take out the header, this will give the size of what is actually
+      //available in each chunk, once page alignment has been taken into account.
+
+      if(page_align)
+      {
+         offset = PAGE_SIZE - (loc + sizeof(struct header))%PAGE_SIZE;
+      }
+      size_t hole_size = header->size - offset;
+
+      if(hole_size >= size)
+      {
+         return i;
+      }
+
 		//is the size contained in header larger than size needed?
-		if(size < heap->free_list.size){
+		//if(size < heap->free_list.size){
 			//return the chunk of memory;
-			return heap->free_list.storage[i];
-		}
+		//	return heap->free_list.storage[i];
+		//}
 	}
 	//no chunk with a valid size is found, return -1;
   return -1;
@@ -210,7 +230,67 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
    // 6. mark the chunk as allocated, write the header/footer (if necessary)
    // 7. return pointer to allocated portion of memory
 
-   return NULL;
+   size_t new_size = size + sizeof(struct header) + (sizeof(struct footer));
+
+   //use our find smallest hole
+   size_t iterator_result = find_smallest_hole(new_size, page_align, heap);
+
+   //if iterator is -1, then we didnt find a hole, otherwise allocate chuck at iterator location
+   if(iterator_result == -1)
+   {
+      //TODO: error check/reporting
+      //I don't know how we want to handle when there isn't an available chunk
+   }
+
+   struct header *old_hole_header = (struct header *)sorted_array_lookup(iterator_result, &heap->free_list);
+   size_t old_hole_loc = (size_t)old_hole_header;
+   size_t old_hole_size = old_hole_header->size;
+
+
+   if((old_hole_size - new_size) < (sizeof(struct header) + sizeof(struct footer)))
+   {
+      size = size + old_hole_size - new_size;
+      new_size = old_hole_size;
+   }
+
+   //page alignment //TODO: make sure this is all correct
+   if(page_align && old_hole_loc&0xFFFFF000){
+      size_t new_loc = old_hole_loc + PAGE_SIZE - (old_hole_loc&0xFFF) - sizeof(struct header);
+      struct header *hole_header = (struct header *)old_hole_loc;
+      hole_header->size = PAGE_SIZE - (old_hole_loc&0xFFF) - sizeof(struct header);
+      hole_header->magic = HEAP_MAGIC;
+      //set chunk as allocated
+      hole_header->allocated = 1;
+
+      struct footer *hole_foot = (struct footer *)((size_t)new_loc - sizeof(struct footer));
+      hole_foot->magic = HEAP_MAGIC;
+      hole_foot->header = hole_header;
+      old_hole_loc = new_loc;
+      old_hole_size = old_hole_size - hole_header->size;
+
+      //TODO
+      // Can you guys figure out what (old_hole_loc&0xFFF) is? I don't quite understand it. It may be replaceable by PAGE_MASK
+      //but im not sure
+   }
+
+
+   //create replacement headers for the chunk
+   struct header *chunk_header = (struct header *)old_hole_loc;
+   chunk_header->magic = HEAP_MAGIC;
+   //set chunk as allocated
+   chunk_header->allocated = 1;
+   chunk_header->size = new_size;
+
+   struct footer *chunk_footer = (struct footer *)(old_hole_loc + sizeof(struct header) + size);
+   chunk_footer->magic = HEAP_MAGIC;
+   chunk_footer->header = chunk_header;
+
+
+   //TODO
+   //check if old_hole_size - new_size > 0
+   //if so, add new hole in that location.
+
+   return (void *)((size_t) chunk_header+sizeof(struct header));
 }
 
 void kfree_heap(void *p, struct heap *heap)
