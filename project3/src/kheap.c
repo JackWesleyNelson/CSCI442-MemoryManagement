@@ -278,23 +278,7 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
       
       //if no headers were found, add a header.
       if(index == -1){
-      	//**********This block might be replaced by just the add hole function? ***********
-      	/*
-      	//set the pointer of a new header to the end of the old heap
-      	struct header *new_header = (struct header *)old_end_address;
-      	//set the magic number, length, and 0 for is allocated
-      	new_header->magic = HEAP_MAGIC;
-      	new_header->size = new_length - old_length;
-      	new_header->allocated = 0;
-      	//set the pointer of a new footer to the end of the space allocated, - the footer size
-      	struct footer *new_footer = (struct footer *)(old_end_address + new_header->size - sizeof(struct footer));
-      	//set the magic number, and the associated header
-      	new_footer->magic = HEAP_MAGIC;
-      	new_footer->header = new_header;
-      	//insert the header into the free_list
-      	sorted_array_insert((struct header *)new_header, &heap->free_list);
-				*/
-				add_hole(old_end_address, (old_end_address + new_header->size - sizeof(struct footer), heap);
+				add_hole(old_end_address, (old_end_address + (new_length-old_length) - sizeof(struct footer)), heap);
 			}
 			   
       else
