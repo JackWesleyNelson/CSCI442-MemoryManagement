@@ -283,7 +283,7 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
       	new_footer->magic = HEAP_MAGIC;
       	new_footer->header = new_header;
       	//insert the header into the free_list
-      	sorted_array_insert(struct header *)new_header, &heap->free_list);
+      	sorted_array_insert((struct header *)new_header, &heap->free_list);
       }
       else
       {
@@ -291,7 +291,7 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
       	struct header *new_header = sorted_array_lookup(index, &heap->free_list);
       	//add the difference in sizes to be the new size
       	new_header->size += new_length - old_length;
-      	struct footer *new_footer = (struct footer *)((size_t)new_header + header->size - sizeof(struct footer));
+      	struct footer *new_footer = (struct footer *)((size_t)new_header + new_header->size - sizeof(struct footer));
       	new_footer->magic = HEAP_MAGIC;
       	new_footer->header = new_header;
       }
