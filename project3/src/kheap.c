@@ -283,7 +283,7 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
       	new_footer->magic = HEAP_MAGIC;
       	new_footer->header = new_header;
       	//insert the header into the free_list
-      	sorted_array_insert(void*)new_header, &heap->free_list);
+      	sorted_array_insert(struct header *)new_header, &heap->free_list);
       }
       else
       {
