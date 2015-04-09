@@ -279,7 +279,7 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
       //if no headers were found, add a header.
       if(index == -1){
       	//**********This block might be replaced by just the add hole function? ***********
-      	
+      	/*
       	//set the pointer of a new header to the end of the old heap
       	struct header *new_header = (struct header *)old_end_address;
       	//set the magic number, length, and 0 for is allocated
@@ -293,7 +293,10 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
       	new_footer->header = new_header;
       	//insert the header into the free_list
       	sorted_array_insert((struct header *)new_header, &heap->free_list);
-      }
+				*/
+				add_hole(old_end_address, (old_end_address + new_header->size - sizeof(struct footer), heap);
+			}
+			   
       else
       {
       	//a last header was found, adjust it
@@ -303,7 +306,10 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
       	struct footer *new_footer = (struct footer *)((size_t)new_header + new_header->size - sizeof(struct footer));
       	new_footer->magic = HEAP_MAGIC;
       	new_footer->header = new_header;
-      }
+				  
+				
+			}
+
       //Now that we should have enough space, recall the function
       return kalloc_heap(size, page_align, heap);
    }
@@ -379,7 +385,6 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
 
 void kfree_heap(void *p, struct heap *heap)
 {
-
 	//check if pointer is null	
 	if(p == 0) return;
 	if(p == NULL) return;
