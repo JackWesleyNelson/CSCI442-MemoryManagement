@@ -382,23 +382,25 @@ void kfree_heap(void *p, struct heap *heap)
   // 2. get the header and the footer based on the passed pointer
   // 3. mark the chunk as free in the header
   // 4. add a hole in the space that was previously allocated
-/*
+
 	//check if pointer is null	
 	if(p == 0) return;
 	//get the header and footer from the pointer
 	struct header *p_header = (struct header*)((size_t)p - sizeof(struct header));
 	struct footer *p_footer = (struct footer*)((size_t)p_header + p_header->size - sizeof(struct footer));
 	//check that these headers and footers match our magic number
-	ASSERT(p_header->magic == HEAP_MAGIC);
-	ASSERT(p_footer->magic == HEAP_MAGIC);
+	if(p_header->magic != HEAP_MAGIC) return;
+	if(p_footer->magic != HEAP_MAGIC) return;
 	//set p_header as unallocated
-	p_header->allocated = false;
-	bool add_to_free_list = true;
+	p_header->allocated = 0;
+	char add_to_free_list = 1;
+
+	//left
 
 	//get the footer from the left if it exists	
 	struct footer *left_footer = (struct footer*)((size_t)p_header - sizeof(struct footer));
 	//check if the magic number matches, and the segment is a hole	
-	if(left_footer->magic == HEAP_MAGIC && left_footer->header->allocated == false)
+	if(left_footer->magic == HEAP_MAGIC && left_footer->header->allocated == 1)
 	{
 		//save the current size
 		size_t current_size = p_header->size;
@@ -409,11 +411,69 @@ void kfree_heap(void *p, struct heap *heap)
 		//add on the size of the initial segment to the size of the left segment
 		p_header->size += current_size;
 		//don't re-add the header
-		add_to_free_list = false;
+		add_to_free_list = 0;
 	}
-*/
 	
-	
+
+	//right
+
+	//get the header to the right if it exists
+	struct header *right_header = (struct header*)((size_t)p_footer + sizeof(struct footer));
+	//check that magic num matches, and the segment is a hole
+	if(right_header->magic == HEAP_MAGIC && right_header->allocated == 0)
+	{
+		//add the size of the right segment to the current segment
+		p_header->size += right_header->size;
+		//get the footer of the new header, set our current footer to this footer.
+		struct footer *right_footer = (struct footer*)((size_t)right_header + right_header->size - sizeof(right_footer));
+		p_header = right_footer;
+		//find the iterator for the header to remove
+		size_t i = 0;
+		while((i < heap->free_list.size) && (sorted_array_lookup(i, &heap->free_list) != (struct header*)right_header))
+		{
+			i++;
+		}
+		//make sure the header was found
+		if(i >= heap->free_list.size) return;
+		
+		sorted_array_remove(i, &heap->free_list);
+	}
+
+	//if the footer is at the end of the structure, then contract the heap
+	if((size_t)p_footer + sizeof(struct footer) == heap->end_address)
+	{
+		//get the current length, and create the new length
+		size_t length = heap->end_address - heap->start_address;
+		size_t new_length = heap_resize(((size_t)p_header - (size_t)heap->start_address), heap);
+		
+		if(p_header->size - (length - new_length) > 0)
+		{
+			//resize
+			p_header->size -= length - new_length;
+			//change the footer location
+			p_footer = (struct footer*) ((size_t)p_header + p_header->size - sizeof(struct footer));
+			//set the magic			
+			p_footer->magic = HEAP_MAGIC;
+			//set the pointer to header			
+			p_footer->header = p_header;
+		}
+		else
+		{
+			//won't exist, remove from free_list
+			size_t i = 0;
+			//iterate to the header
+			while((i < heap->free_list.size) && (sorted_array_lookup(i, &heap->free_list) != (struct header*)right_header))
+			{
+				i++;
+			}
+			//remove the header, if the returned iterator is within the size of the list
+			if(i < heap->free_list.size)
+			{
+				sorted_array_remove(i, &heap->free_list);
+			}
+		}
+
+	}
 }
 
 
