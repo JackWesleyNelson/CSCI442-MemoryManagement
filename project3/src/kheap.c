@@ -97,9 +97,9 @@ s8int heap_resize(size_t new_size, struct heap *heap)
    if(new_size < heap->end_address - heap->start_address)
    {
       // contracting the heap
-      if (start & 0xFFFFF000 != 0){
-         start &= 0xFFFFF000;
-         start += 0x1000;
+      if (new_size&0x1000){
+         new_size &= 0x1000;
+         new_size += 0x1000;
       }
 
       // we are going to naively assume that the heap is not being resized to
@@ -354,9 +354,21 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
    chunk_footer->header = chunk_header;
 
 
-   //TODO
    //check if old_hole_size - new_size > 0
    //if so, add new hole in that location.
+   if (old_hole_size - new_size > 0){
+      struct header *hole_header = (struct header *) (old_hole_loc + sizeof(struct header) + size + sizeof(struct footer));
+       hole_header->magic    = HEAP_MAGIC;
+       hole_header->allocated  = 0;
+       hole_header->size     = old_hole_size - new_size;
+       struct footer *hole_footer = (struct footer *) ( (size_t)hole_header + old_hole_size - new_size - sizeof(struct footer) );
+       if ((size_t)hole_footer < heap->end_address)
+       {
+           hole_footer->magic = HEAP_MAGIC;
+           hole_footer->header = hole_header;
+       }
+       sorted_array_insert((void*)hole_header, &heap->free_list);
+   }
 
    return (void *)((size_t) chunk_header+sizeof(struct header));
 }
@@ -370,7 +382,7 @@ void kfree_heap(void *p, struct heap *heap)
   // 2. get the header and the footer based on the passed pointer
   // 3. mark the chunk as free in the header
   // 4. add a hole in the space that was previously allocated
-
+/*
 	//check if pointer is null	
 	if(p == 0) return;
 	//get the header and footer from the pointer
@@ -399,7 +411,7 @@ void kfree_heap(void *p, struct heap *heap)
 		//don't re-add the header
 		add_to_free_list = false;
 	}
-
+*/
 	
 	
 }
