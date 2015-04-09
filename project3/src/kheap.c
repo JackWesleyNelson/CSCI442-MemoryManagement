@@ -355,11 +355,63 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
 
 void kfree_heap(void *p, struct heap *heap)
 {
-   // TODO: IMPLEMENT THIS FUNCTION
+  // TODO: IMPLEMENT THIS FUNCTION
+	
+  // pseudocode:
+  // 1. check for a null pointer before proceeding
+  // 2. get the header and the footer based on the passed pointer
+  // 3. mark the chunk as free in the header
+  // 4. add a hole in the space that was previously allocated
 
-   // pseudocode:
-   // 1. check for a null pointer before proceeding
-   // 2. get the header and the footer based on the passed pointer
-   // 3. mark the chunk as free in the header
-   // 4. add a hole in the space that was previously allocated
+	//check if pointer is null	
+	if(p == 0) return;
+	//get the header and footer from the pointer
+	struct header *p_header = (struct header*)((size_t)p - sizeof(struct header));
+	struct footer *p_footer = (struct footer*)((size_t)p_header + p_header->size - sizeof(struct footer));
+	//check that these headers and footers match our magic number
+	ASSERT(p_header->magic == HEAP_MAGIC);
+	ASSERT(p_footer->magic == HEAP_MAGIC);
+	//set p_header as unallocated
+	p_header->allocated = false;
+	bool add_to_free_list = true;
+
+	//get the footer from the left if it exists	
+	struct footer *left_footer = (struct footer*)((size_t)p_header - sizeof(struct footer));
+	//check if the magic number matches, and the segment is a hole	
+	if(left_footer->magic == HEAP_MAGIC && left_footer->header->allocated == false)
+	{
+		//save the current size
+		size_t current_size = p_header->size;
+		//reassign our head to the head of the left footer
+		p_header = left_footer->header;
+		//reassign the footer to point to the new header location
+		p_footer->header = p_header;
+		//add on the size of the initial segment to the size of the left segment
+		p_header->size += current_size;
+		//don't re-add the header
+		add_to_free_list = false;
+	}
+
+	
+	
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
