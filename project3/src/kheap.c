@@ -97,6 +97,10 @@ s8int heap_resize(size_t new_size, struct heap *heap)
    if(new_size < heap->end_address - heap->start_address)
    {
       // contracting the heap
+      if (start & 0xFFFFF000 != 0){
+         start &= 0xFFFFF000;
+         start += 0x1000;
+      }
 
       // we are going to naively assume that the heap is not being resized to
       // a value that is too small
@@ -108,6 +112,10 @@ s8int heap_resize(size_t new_size, struct heap *heap)
    else if(new_size > heap->end_address - heap->start_address)
    {
       // expanding the heap
+      if (new_size & 0xFFFFF000 != 0){
+         new_size &= 0xFFFFF000;
+         new_size += 0x1000;
+      }
 
       // make sure the new size is within the bounds
       if(heap->start_address + new_size > heap->max_address) {
