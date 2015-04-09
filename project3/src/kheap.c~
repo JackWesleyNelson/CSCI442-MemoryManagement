@@ -252,10 +252,11 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
       size_t old_end_address = heap->end_address;
       //allocate more room
       size_t resize_result = heap_resize(old_length + new_size, heap);
-      //if(resize_result == -1){
+      if(resize_result == -1){
+				return;
       	//heap did not resize, error out here
       	//not sure how since we don't get to use the library for fprintf and stderr
-      //}
+      }
       //heap did resize
       size_t new_length = heap->end_address - heap->start_address;
       //find location of the last header in memory
@@ -324,8 +325,8 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
       struct header *hole_header = (struct header *)old_hole_loc;
       hole_header->size = PAGE_SIZE - (old_hole_loc&0xFFF) - sizeof(struct header);
       hole_header->magic = HEAP_MAGIC;
-      //set chunk as allocated
-      hole_header->allocated = 1;
+      //set chunk as unallocated
+      hole_header->allocated = 0;
 
       struct footer *hole_foot = (struct footer *)((size_t)new_loc - sizeof(struct footer));
       hole_foot->magic = HEAP_MAGIC;
@@ -340,7 +341,10 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
       //old_hole_loc&0xFFF maintains the highest order 12 bits of old_hole_loc
       //while setting the remaining bits to 0
    }
-
+   else
+   {
+     sorted_array_remove(iterator_result, &heap->free_list);
+   }
 
    //create replacement headers for the chunk
    struct header *chunk_header = (struct header *)old_hole_loc;
@@ -367,7 +371,7 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
            hole_footer->magic = HEAP_MAGIC;
            hole_footer->header = hole_header;
        }
-       sorted_array_insert((void*)hole_header, &heap->free_list);
+       sorted_array_insert((struct header*)hole_header, &heap->free_list);
    }
 
    return (void *)((size_t) chunk_header+sizeof(struct header));
@@ -375,16 +379,10 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
 
 void kfree_heap(void *p, struct heap *heap)
 {
-  // TODO: IMPLEMENT THIS FUNCTION
-	
-  // pseudocode:
-  // 1. check for a null pointer before proceeding
-  // 2. get the header and the footer based on the passed pointer
-  // 3. mark the chunk as free in the header
-  // 4. add a hole in the space that was previously allocated
 
 	//check if pointer is null	
 	if(p == 0) return;
+	if(p == NULL) return;
 	//get the header and footer from the pointer
 	struct header *p_header = (struct header*)((size_t)p - sizeof(struct header));
 	struct footer *p_footer = (struct footer*)((size_t)p_header + p_header->size - sizeof(struct footer));
@@ -400,7 +398,7 @@ void kfree_heap(void *p, struct heap *heap)
 	//get the footer from the left if it exists	
 	struct footer *left_footer = (struct footer*)((size_t)p_header - sizeof(struct footer));
 	//check if the magic number matches, and the segment is a hole	
-	if(left_footer->magic == HEAP_MAGIC && left_footer->header->allocated == 1)
+	if(left_footer->magic == HEAP_MAGIC && left_footer->header->allocated == 0)
 	{
 		//save the current size
 		size_t current_size = p_header->size;
@@ -472,7 +470,10 @@ void kfree_heap(void *p, struct heap *heap)
 				sorted_array_remove(i, &heap->free_list);
 			}
 		}
-
+	}
+	if(add_to_free_list == 1)
+	{
+		sorted_array_insert((struct header*) p_header, &heap->free_list);
 	}
 }
 
