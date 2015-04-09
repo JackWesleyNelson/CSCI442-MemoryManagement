@@ -238,8 +238,65 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
    //if iterator is -1, then we didnt find a hole, otherwise allocate chuck at iterator location
    if(iterator_result == -1)
    {
-      //TODO: error check/reporting
-      //I don't know how we want to handle when there isn't an available chunk
+      //error check/reporting
+      //save the heap length and end address
+      size_t old_length = heap->end_address - heap->start_address;
+      size_t old_end_address = heap->end_address;
+      //allocate more room
+      size_t resize_result = heap_resize(old_length + new_size, heap);
+      //if(resize_result == -1){
+      	//heap did not resize, error out here
+      	//not sure how since we don't get to use the library for fprintf and stderr
+      //}
+      //heap did resize
+      size_t new_length = heap->end_address - heap->start_address;
+      //find location of the last header in memory
+      i = 0;
+      //index and value of furthest header
+      size_t index = -1;
+      size_t value = 0x0;
+      while(i < heap->free_list.size)
+      {
+      	//get value of the header
+      	size_t tmp = (size_t)sorted_array_lookup(i, &heap->free_list);
+      	//replace value with this header value if it's larger, and set the index to the current iteration
+      	if(tmp > value)
+      	{
+      		value = tmp;
+      		index = i;
+      	}
+      }
+      
+      //if no headers were found, add a header.
+      if(index == -1){
+      	//**********This block might be replaced by just the add hole function? ***********
+      	
+      	//set the pointer of a new header to the end of the old heap
+      	struct header *new_header = (struct header *)old_end_address;
+      	//set the magic number, length, and 0 for is allocated
+      	new_header->magic = HEAP_MAGIC;
+      	new_header->size = new_length - old_length;
+      	new_header->allocated = 0;
+      	//set the pointer of a new footer to the end of the space allocated, - the footer size
+      	struct footer *new_footer = (struct footer *)(old_end_address + new_header->size - sizeof(struct footer));
+      	//set the magic number, and the associated header
+      	new_footer->magic = HEAP_MAGIC;
+      	new_footer->header = new_header;
+      	//insert the header into the free_list
+      	sorted_array_insert(void*)new_header, &heap->free_list);
+      }
+      else
+      {
+      	//a last header was found, adjust it
+      	struct header *new_header = sorted_array_lookup(index, &heap->free_list);
+      	//add the difference in sizes to be the new size
+      	new_header->size += new_length - old_length;
+      	struct footer *new_footer = (struct footer *)((size_t)new_header + header->size - sizeof(struct footer));
+      	new_footer->magic = HEAP_MAGIC;
+      	new_footer->header = new_header;
+      }
+      //Now that we should have enough space, recall the function
+      return kalloc_heap(size, page_align, heap);
    }
 
    struct header *old_hole_header = (struct header *)sorted_array_lookup(iterator_result, &heap->free_list);
