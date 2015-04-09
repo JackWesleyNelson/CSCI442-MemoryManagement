@@ -251,19 +251,19 @@ void *kalloc_heap(size_t size, u8int page_align, struct heap *heap)
       //heap did resize
       size_t new_length = heap->end_address - heap->start_address;
       //find location of the last header in memory
-      i = 0;
+      iterator_result = 0;
       //index and value of furthest header
       size_t index = -1;
       size_t value = 0x0;
-      while(i < heap->free_list.size)
+      while(iterator_result < heap->free_list.size)
       {
       	//get value of the header
-      	size_t tmp = (size_t)sorted_array_lookup(i, &heap->free_list);
+      	size_t tmp = (size_t)sorted_array_lookup(iterator_result, &heap->free_list);
       	//replace value with this header value if it's larger, and set the index to the current iteration
       	if(tmp > value)
       	{
       		value = tmp;
-      		index = i;
+      		index = iterator_result;
       	}
       }
       
